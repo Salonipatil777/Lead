@@ -1,0 +1,169 @@
+<!-- submit_photo.html -->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Photo Submission PWA</title>
+    <!-- Include Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container my-4">
+        <h3 class="my-3 text-center">Photo Submission PWA</h3>
+        <form id="photoForm" method="post" action="{% url 'submit_photo' %}">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-7 mx-auto bg-dark p-4">
+                    <div class="form-data">
+                        <label class="mb-2" for="date">Date:</label>
+                        <input type="text" id="date" name="date" class="form-control mb-3" readonly>
+                    </div>
+                    <div class="form-data">
+                        <label class="mb-2" for="time">Time:</label>
+                        <input type="text" id="time" name="time" class="form-control mb-3" readonly>
+                    </div>
+                    <div class="form-data">
+                        <label class="mb-2" for="location">Location:</label>
+                        <input type="text" id="location" name="location" class="form-control mb-3" readonly>
+
+                    </div>
+                    <div class="form-data">
+                        <label class="mb-2" for="name">Name:</label>
+                        <input type="text" id="name" name="name" class="form-control mb-3">
+                        <button type="button" id="cameraButton" onclick="fun()" class="btn btn-primary">Take
+                            Photo</button>
+                    </div>
+                    <div class="form-data">
+                        <video id="video" width="640" height="480" autoplay style="display: none;"></video>
+                        <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+                        <img id="captured-image" src="#" style="display: none;">
+                        <input type="hidden" id="image_data" name="image_data">
+                    </div>
+                    <div class="form-data mt-3">
+                        <button id="capture-btn" class="btn btn-success">Submit</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+    </div>
+
+    <!-- Include Bootstrap JS and custom JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureBtn = document.getElementById('capture-btn');
+        const imageInput = document.getElementById('image_data');
+        const cameraButton = document.getElementById('cameraButton');
+        const saveBtn = document.getElementById('save-btn');
+        const submitBtn = document.getElementById('submitBtn');
+        const constraints = { video: false };
+
+
+        function fun() {
+            if (video.style.display === 'none') {
+                video.style.display = 'block';
+            } else {
+                video.style.display = 'none';
+            }
+        }
+
+        let stream = null;
+        function startCamera() {
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(stream => {
+                    video.srcObject = stream;
+                    video.style.display = 'block';
+                    document.getElementById('cameraButton').style.display = 'none';
+                    captureBtn.style.display = 'block';
+                    saveBtn.style.display = 'block';
+                })
+                .catch(err => {
+                    console.error('Error accessing camera:', err);
+                    // alert('Error accessing camera. Please check your camera settings and try again.');
+                });
+        }
+
+
+
+        cameraButton.addEventListener('click', () => {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(mediaStream => {
+                    stream = mediaStream;
+                    video.srcObject = mediaStream;
+                    video.play();
+                    video.style.display = 'block';
+                })
+                .catch(err => {
+                    console.error('Error accessing camera:', err);
+                    alert('Error accessing camera. Please check your camera settings and try again.');
+                });
+        });
+
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error('Error accessing camera:', err);
+            });
+
+        // Function to update date and time
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('date').value = now.toISOString().slice(0, 10);
+            document.getElementById('time').value = now.toTimeString().slice(0, 8);
+        }
+
+        // Update date and time initially
+        updateDateTime();
+
+        // Update date and time every second
+        setInterval(updateDateTime, 1000);
+
+        // Function to update location (dummy implementation)
+        // Update location
+        function updateLocation() {
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    const locationElement = document.getElementById('location');
+                    locationElement.value = `Latitude: ${latitude}, Longitude: ${longitude}`;
+                }, error => {
+                    console.error('Error getting location:', error);
+                });
+            } else {
+                console.error('Geolocation is not supported.');
+            }
+        }
+
+        // Update location initially
+        updateLocation();
+
+        // Update location every 10 seconds
+        setInterval(updateLocation, 10000); // Update every 10 seconds
+
+
+        // Update location initially
+        updateLocation();
+
+
+        captureBtn.addEventListener('click', () => {
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL('image/jpeg');
+            imageInput.value = imageData;
+            document.getElementById('captured-image').src = imageData;
+            saveBtn.style.display = 'block';
+        });
+
+        saveBtn.addEventListener('click', () => {
+            submitBtn.style.display = 'block';
+            saveBtn.style.display = 'none';
+        });
+    </script>
+</body>
+
+</html>
